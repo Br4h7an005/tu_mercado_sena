@@ -8,97 +8,76 @@ use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
-
-
-
+/**
+ * UserRepository - Implementación del repositorio de usuarios
+ * 
+ * RESPONSABILIDADES:
+ * - Acceso a datos (Eloquent ORM)
+ * - Transformar DTOs en modelos
+ * - Hashear contraseñas antes de guardar
+ * - Asignar valores por defecto (rol, estado)
+ */
 class UserRepository implements UserRepositoryInterface
 {
     /**
-     * UserRepository - Implementación del repositorio de usuarios
+     * Crear un nuevo usuario en la base de datos
      * 
-     * Esta clase implementa la interfaz UserRepositoryInterface,
-     * proporcionando la lógica real de acceso a datos usando Eloquent.
+     * PROCESO:
+     * 1. Convierte el DTO a array
+     * 2. Hashea la contraseña
+     * 3. Asigna correo_id, rol_id y estado_id
+     * 4. Crea el usuario en la BD
      * 
-     * RESPONSABILIDADES:
-     * - Interactuar directamente con la base de datos
-     * - Transformar DTOs en modelos de Eloquent
-     * - Hashear contraseñas antes de guardarlas (RNF007)
-     * - Asignar valores por defecto (rol, estado)
-     * 
-     * 
-     * @param RegisterDTO $dto - Datos validados del nuevo usuario
-     * @return Usuario - El usuario recién creado
+     * @param RegisterDTO $dto
+     * @param int $correoId - ID del correo asociado
+     * @return Usuario
      */
-    public function create(RegisterDTO $dto): Usuario {
-        /**
-         * Crea un nuevo usuario en la base de datos
-         * 
-         * PROCESO:
-         * 1. Convierte el DTO a array
-         * 2. Hashea la contraseña (cumple RNF007)
-         * 3. Asigna rol_id = 1 (usuario normal)
-         * 4. Asigna estado_id = 1 (activo)
-         * 5. Inserta en la BD y retorna el modelo creado
-         */
-
-        // Convertir el DTO a array para usar con los datos
+    public function create(RegisterDTO $dto, int $correoId): Usuario
+    {
         $data = $dto->toArray();
 
-        // Hash::make hashea la contraseña usando bcrypt
+        // Asignar el ID del correo (ahora entero)
+        $data['correo_id'] = $correoId;
+
+        // Hashear la contraseña (cumple RNF007)
         $data['password'] = Hash::make($data['password']);
 
-        // Asignar el rol del usuario a normal por defecto
-        // 1 = Prosumer, 2 = Administrador, 3 = Master
-        $data['rol_id'] = 1;
+        // Rol y estado por defecto
+        $data['rol_id'] = 1;     // 1 = Usuario normal
+        $data['estado_id'] = 1;  // 1 = Activo
 
-        // Asignar el estado del usuario por defecto
-        // 1 = Activo, 2 = Invisible, 3 = Eliminado
-        $data['estado_id'] = 1;
-
-        // Usuario::create() -> Inserta los datos en la BD y retorna el modelo con el ID asignado
+        // Crear usuario y retornar el modelo
         return Usuario::create($data);
-        
     }
 
     /**
-     * Buscar un usuario por email
-     * 
-     * El método where() construye una query sql.
-     * first() Ejecuta la query y retorna el primer resultado o null
+     * Buscar usuario por el ID del correo
      * 
      * SQL -> SELECT * FROM usuarios WHERE correo_id = ? LIMIT 1
      * 
-     * @param string $email - Email del usuario
-     * @return Usuario|null - Usuario encontrado o null
+     * @param int $correoId
+     * @return Usuario|null
      */
-    public function findByEmail(string $email): Usuario|null
+    public function findByCorreoId(int $correoId): ?Usuario
     {
-        return Usuario::where('correo_id', $email)->first();
+        return Usuario::where('correo_id', $correoId)->first();
     }
 
     /**
-     * Buscar un usuario por ID
+     * Buscar un usuario por ID (primary key)
      * 
-     * find() -> Atajo de Enloquent(Object Relational Mapper de Laravel) para buscar por primary key
-     * 
-     * @param int $id - ID del usuario
-     * @return Usuario|null - Usuario encontrado o null
+     * @param int $id
+     * @return Usuario|null
      */
-    public function findById(int $id): Usuario|null
+    public function findById(int $id): ?Usuario
     {
         return Usuario::find($id);
     }
 
     /**
-     * Actualizar la fecha de última actividad
+     * Actualizar la fecha de última actividad del usuario
      * 
-     * Llamarse cada vez que el usuario realice una acción-
-     * Sirve para el indicador del "Recientemente conectado" (RF010).
-     * Un usuario esta activo si su última interacción fue hace menos de un dia
-     * 
-     * SQL -> UPDATE usuarios SET fecha_reciente = NOW() WHERE id = ?
-     * 
-     * @param int $userId - Id del usuario
+     * @param int $userId
      * @return void
      */
     public function updateLastActivity(int $userId): void
@@ -109,35 +88,23 @@ class UserRepository implements UserRepositoryInterface
     }
 
     /**
-     * Verificar si el usuario existe usando el email
-     * 
-     * exists() -> Retorna true/false sin cargar el modelo completo.
-     * Más eficiente que findByEmail cuando solo se necesita saber si 
-     * el usuario existe
+     * Verificar si existe un usuario asociado a un correo
      * 
      * SQL -> SELECT EXISTS(SELECT * FROM usuarios WHERE correo_id = ?);
      * 
-     * @param string $email - Email a verificar
-     * @return bool - true si existe, false si no
+     * @param int $correoId
+     * @return bool
      */
-    public function exists(string $email): bool
+    public function existsByCorreoId(int $correoId): bool
     {
-        return Usuario::where('correo_id', $email)->exists();
+        return Usuario::where('correo_id', $correoId)->exists();
     }
 
     /**
      * Invalidar todos los tokens JWT del usuario
      * 
-     * NUEVO MÉTODO PARA JWT
-     * 
-     * PROPÓSITO:
-     * Cuando el usuario hace "cerrar sesión en todos los dispositivos",
-     * guardamos un timestamp. Luego en el middleware validamos que
-     * los tokens sean posteriores a esta fecha.
-     * 
-     * 
-     * @param int $userId - ID del usuario
-     * @return bool - true si se actualizó
+     * @param int $userId
+     * @return bool
      */
     public function invalidateAllTokens(int $userId): bool
     {
@@ -150,5 +117,12 @@ class UserRepository implements UserRepositoryInterface
 
         return false;
     }
+
+    public function existsByEmail(string $email): bool
+{
+    return Usuario::whereHas('correo', function ($q) use ($email) {
+        $q->where('correo', $email);
+    })->exists();
 }
 
+}

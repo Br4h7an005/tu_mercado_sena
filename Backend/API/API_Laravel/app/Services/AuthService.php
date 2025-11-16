@@ -11,6 +11,9 @@ use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\JWTGuard;
+use App\Contracts\ICorreoRepository;
+use App\Services\RegistroService;
+use App\DTOs\Auth\VerifyCode;
 
 /**
  * AuthService - Servicio de autenticación
@@ -43,6 +46,8 @@ class AuthService
      */
     public function __construct(
         private UserRepositoryInterface $userRepository,
+        private ICorreoRepository $correoRepository,
+        private RegistroService $registroService,
         private JWTGuard $jwt
     )
     {}
@@ -51,41 +56,70 @@ class AuthService
      * Lógica de registro de usuario
      * 
      * PROCESO:
-     * 1. Recibe el DTO con los datos validados
-     * 2. Verifica que el email no exista (Doble seguridad)
-     * 3. Crea el usuario usando el repositorio
-     * 4. Crea un token de Sanctum para el dispositivo
-     * 5. Retorna el usuario y el token
+     * 1. Recibe el DTO con los datos validados (correo en texto)
+     * 2. Verifica el código del correo (VerifyCode)
+     * 3. Usa el correo_id obtenido de la verificación
+     * 4. Verifica que el correo_id no esté ya en uso por un usuario
+     * 5. Crea el usuario usando el repositorio
+     * 6. Genera token JWT para el dispositivo
+     * 7. Retorna el usuario, token y expiración
      * 
-     * @param RegisterDTO $dto - Datos del usuario a registrar
-     * @return array{user: Usuario, token: string}
-     * @throws ValidationException - Si el email ya existe
+     * @param RegisterDTO $registerDto - Datos del usuario a registrar
+     * @param VerifyCode $verifyCode - Datos del correo verificado
+     * @return array{success: bool, message?: string, data?: mixed, user?: Usuario, token?: string, token_type?: string, expires_in?: int}
      */
-    public function register(RegisterDTO $dto): array
+    public function register(RegisterDTO $registerDto, VerifyCode $verifyCode): array
     {
-        // Válidar si el correo ya fue registrado
-        if ($this->userRepository->exists($dto->correo_id)) {
-            throw ValidationException::withMessages([
-                'correo_id' => ['El correo ya está registrado']
-            ]);
+        //Buscar el correo ingresado
+        $correo = $this->correoRepository->findByCorreo($registerDto->correo);
+
+        if (!$correo) {
+            return [
+                'success' => false,
+                'message' => 'Este correo no ha sido verificado o no existe',
+                'data' => null,
+            ];
         }
 
-        // Crear el usuario en la base de datos, además se encarga de hashear la contraseña, asignar el rol y el estado
-        $user = $this->userRepository->create($dto);
+        // Verificar el código de verificación asociado al correo
+        $verificacion = $this->registroService->verificarClave($registerDto, $verifyCode);
 
-        // Crear el token de acceso 
+        if (!$verificacion) {
+            return [
+                'success' => false,
+                'message' => $verificacion['message'],
+                'data' => null,
+            ];
+        }
+
+        // Obtener el ID del correo correspondiente
+        $correoId = $correo->id;
+
+        // Verificar que no haya un usuario con ese correo
+        if ($this->userRepository->existsByCorreoId($correoId)) {
+            return [
+                'success' => false,
+                'message' => 'Ya existe un usuario registrado con ese correo',
+                'data' => null,
+            ];
+        }
+
+        $user = $this->userRepository->create($registerDto, $correoId);
+
+        // Crear el token JWT
         $token = $this->jwt->fromUser($user);
 
-        // Obtener el tiempo de expiración desde la config
-        // config('jwt.tll') Retorna los minutos configurados
+        // Obtener el tiempo de expiración configurado en JWT (en segundos)
         $expiresIn = $this->jwt->factory()->getTTL() * 60;
 
-        // Retornar el usuario y el token, el cliente debe guardar este token para futuras peticiones
+        // Retornar respuesta
         return [
+            'success' => true,
+            'message' => 'Usuario registrado correctamente',
             'user' => $user,
             'token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => $expiresIn
+            'expires_in' => $expiresIn,
         ];
     }
 
@@ -109,12 +143,21 @@ class AuthService
     public function login(LoginDTO $dto): array
     {
         // Buscar el usuario por email
-        $user = $this->userRepository->findByEmail($dto->correo_id);
+        $correo = $this->correoRepository->findByCorreo($dto->correo);
+
+        if (!$correo) {
+            return [
+                'success' => false,
+                'massage' => 'El correo no está registrado'
+            ];
+        }
+
+        $user = $this->userRepository->findByCorreoId($correo->id);
 
         // Lanzar excepción si las credenciales son incorrectas
         if (!$user) {
             throw ValidationException::withMessages([
-                'correo_id' => ['Correo o contraseña incorrectos']
+                'usuario' => ['Correo o contraseña incorrectos']
             ]);
         }
 
@@ -123,7 +166,7 @@ class AuthService
         // Si no coincide, lanzamos excepción con el mismo mensaje genérico
         if (!Hash::check($dto->password, $user->password)) {
             throw ValidationException::withMessages([
-                'correo_id' => ['Correo o contraseña incorrectos']
+                'usuario' => ['Correo o contraseña incorrectos']
             ]);
         }
 
@@ -131,7 +174,7 @@ class AuthService
         // estado_id: 1 = activo, 2 = invisible, 3 = eliminado
         if ($user->estado_id === 3) {
             throw ValidationException::withMessages([
-                'correo_id' => ['Esta cuenta ha sido desactivada']
+                'usuario' => ['Esta cuenta ha sido desactivada']
             ]);
         }
 
@@ -139,7 +182,7 @@ class AuthService
         // Lanzar una excepción
         if ($user->rol_id === 1 && $dto->device_name === 'desktop'){
             throw ValidationException::withMessages([
-                'correo_id' => ['No cuentas con el rol para acceder']
+                'usuario' => ['No cuentas con el rol para acceder']
             ]);
         }
         

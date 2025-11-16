@@ -52,10 +52,10 @@ class AuthController
         try {
             // Crear el DTO desde los datos validados del request
             // valitated() retorna solo los campos que pasaron la validación
-            $dto = RegisterDTO::fromRequest($request->validated());
+            $registerDto = RegisterDTO::fromRequest($request->validated());
 
             // Llamar al servicio para realizar el servicio
-            $result = $this->authService->register($dto);
+            $result = $this->authService->register($registerDto, VerifyCode $verifyCodeDto);
 
             // Retornar la respuesta exitosa con el usuario y el token de acceso
             return response()->json([
