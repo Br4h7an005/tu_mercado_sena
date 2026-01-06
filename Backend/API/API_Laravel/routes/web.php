@@ -14,3 +14,6 @@ Route::get('login', function () {
 
 Route::get('/verificar-correo', [AuthController::class, 'verificarCorreo'])->name('auth.verificar-correo');
 
+Route::post('/iniciar-registro', [AuthController::class, 'iniciarRegistro'])->name('auth.iniciar-registro');
+
+
