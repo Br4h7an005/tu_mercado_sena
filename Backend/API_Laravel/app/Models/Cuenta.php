@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use App\Models\Usuario;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cuenta extends Authenticatable implements JWTSubject
 {
@@ -112,5 +113,10 @@ class Cuenta extends Authenticatable implements JWTSubject
 
         $this->save();
         return $this->clave;       
+    }
+
+    public function tokensDeSesion()
+    {
+        return $this->hasMany(TokensDeSesion::class, "cuenta_id" );
     }
 }
