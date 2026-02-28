@@ -548,26 +548,32 @@ Ejemplo de uso:
   "nickname": "Nuevo Nickname",
   "descripcion": "Nueva_descripcioón",
   "link": "Nueva red social"
+  "notifica_push": true,
+  "notifica_correo" true
 }
 ```
 
-**⚠️Nota:** Se pueden enviar los 4 datos o se pueden mandar uno, no tendra ninguna afectación al momento de actualizar los datos
+**⚠️Nota:** Se pueden enviar todos los datos o se pueden mandar uno, no tendra ninguna afectación al momento de actualizar los datos
 
 Respuesta:
 
 ```JSON
 {
-  "id": 1,
-  "cuenta_id": 1,
-  "nickname": "Nuevo Nickname",
-  "imagen": "Nueva_foto",
-  "descripcion": "Nueva_descripcioón",
-  "link": "Nueva red social",
-  "rol_id": 1,
-  "estado_id": 1,
-  "fecha_registro": "2025-12-28 19:14:28",
-  "fecha_actualiza": "2025-12-28 19:45:56",
-  "fecha_reciente": "2025-12-28 14:23:56"
+  "status": "success",
+  "message": "Perfil actualizado correctamente.",
+  "data": {
+    "id": 3,
+    "cuenta_id": 3,
+    "nickname": "Marcos228",
+    "imagen": "C:\\xampp\\tmp\\php79B0.tmp",
+    "descripcion": "Estudiante de desarrollo",
+    "link": "https://instagram.com/julian.https",
+    "rol_id": 1,
+    "estado_id": 1,
+    "fecha_reciente": "2026-02-28 14:40:33",
+    "notifica_push": true,
+    "notifica_correo": false
+  }
 }
 ```
 
