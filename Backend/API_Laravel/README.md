@@ -549,7 +549,7 @@ Ejemplo de uso:
   "descripcion": "Nueva_descripcioón",
   "link": "Nueva red social"
   "notifica_push": true,
-  "notifica_correo" true
+  "notifica_correo": true
 }
 ```
 
