@@ -100,7 +100,7 @@ class UsuarioService implements IUsuarioService
 
                 $cuentaUsuario->update([
                     'notifica_push' => $dto->notifica_push ?? $cuentaUsuario->notifica_push,
-                    'correo_push'   => $dto->notifica_correo ?? $cuentaUsuario->notifica_correo,
+                    'notifica_correo'   => $dto->notifica_correo ?? $cuentaUsuario->notifica_correo,
                 ]);
             }
 

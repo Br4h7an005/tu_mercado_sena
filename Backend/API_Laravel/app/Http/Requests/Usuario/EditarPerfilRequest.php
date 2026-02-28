@@ -54,7 +54,7 @@ class EditarPerfilRequest extends FormRequest
                 'boolean',
             ],
 
-            'correo_push' => [
+            'notifica_correo' => [
                 'sometimes',
                 'boolean',
             ],
@@ -69,9 +69,9 @@ class EditarPerfilRequest extends FormRequest
             ]);
         }
 
-        if ($this->has('correo_push')) {
+        if ($this->has('notifica_correo')) {
             $this->merge([
-                'correo_push' => !$this->boolean('correo_push')
+                'notifica_correo' => !$this->boolean('notifica_correo')
             ]);
         }
     }
