@@ -93,11 +93,30 @@ class UsuarioService implements IUsuarioService
                 ]);
             }
 
+
+            // Cambiar las opciones de las notificaciones
+            if ($dto->notifica_push !== null || $dto->notifica_correo !== null) {
+                $cuentaUsuario = Auth::user();
+
+                $cuentaUsuario->update([
+                    'notifica_push' => $dto->notifica_push ?? $cuentaUsuario->notifica_push,
+                    'correo_push'   => $dto->notifica_correo ?? $cuentaUsuario->notifica_correo,
+                ]);
+            }
+
             $usuario_actualizado = $this->usuarioRepository->update($usuarioId, $dto->toArray());
         
             if (!$usuario_actualizado) {
                 throw new BusinessException('No se pudo actualizar el perfil del usuario.', 500);
             }
+
+            $usuario_actualizado->load('cuenta');
+
+            $usuario_actualizado->notifica_push = $usuario_actualizado->cuenta->notifica_push;
+            $usuario_actualizado->notifica_correo = $usuario_actualizado->cuenta->notifica_correo;
+
+            // Eliminamos la relación cargada para que no ensucie el JSON de salida
+            $usuario_actualizado->unsetRelation('cuenta');
 
             return $usuario_actualizado;
         });

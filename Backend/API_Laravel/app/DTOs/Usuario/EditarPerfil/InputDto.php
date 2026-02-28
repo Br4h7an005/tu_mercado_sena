@@ -14,7 +14,9 @@ class InputDto implements Arrayable
         public ?UploadedFile $imagen = null,
         public ?string $nickname = null,
         public ?string $descripcion = null,
-        public ?string $link = null
+        public ?string $link = null,
+        public ?bool $notifica_push = null,
+        public ?bool $notifica_correo = null
     )
     {}
 
@@ -26,7 +28,9 @@ class InputDto implements Arrayable
             imagen: $request->file('imagen') ?? null,
             nickname: $data['nickname'] ?? null,
             descripcion: $data['descripcion'] ?? null,
-            link: $data['link'] ?? null
+            link: $data['link'] ?? null,
+            notifica_push: $data['notifica_push'] ?? null,
+            notifica_correo: $data['notifica_correo'] ?? null
         );
     }
 
