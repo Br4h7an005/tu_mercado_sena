@@ -81,10 +81,6 @@ class AuthService implements IAuthService
 
     public function iniciarRegistro(RegisterDTO $dto): array
     {
-        log::info('Datos que llegan del frontend', [
-            'dto' => $dto
-            ]);
-
         $this->validateGmailRestriction($dto->email);
 
         // Validar que la cuenta institucional
@@ -102,7 +98,6 @@ class AuthService implements IAuthService
         $ruta = null;
 
         if (!empty($dto->imagen)) {
- 
 
             $file = request()->file('imagen');
 
