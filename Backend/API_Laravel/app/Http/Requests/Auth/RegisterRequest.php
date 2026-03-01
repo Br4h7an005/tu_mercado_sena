@@ -33,7 +33,6 @@ class RegisterRequest extends FormRequest
                 Password::min(8)
                     ->mixedCase()
                     ->numbers()
-                    ->uncompromised()
             ],
 
             'nickname' => [
