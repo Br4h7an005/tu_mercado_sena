@@ -55,6 +55,25 @@ $app = Application::configure(basePath: dirname(__DIR__))
                     ], 422);
                 }
 
+                if ($e instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
+                    return response()->json([
+                        'status' => 'error',
+                        'type' => 'RateLimitException',
+                        'message' => 'Has realizado demasiadas solicitudes. Espera un momento.'
+                    ], 429);
+                }
+
+                if ($e instanceof \Illuminate\Http\Exceptions\HttpResponseException) {
+                    $response = $e->getResponse();
+                    if ($response->getStatusCode() === 429) {
+                        return response()->json([
+                            'status' => 'error',
+                            'type' => 'RateLimitException',
+                            'message' => 'Límite de peticiones excedido. Inténtalo más tarde.'
+                        ], 429);
+                    }
+                }
+
                 if ($e instanceof NotFoundHttpException) {
                     return response()->json([
                         'status'  => 'error',

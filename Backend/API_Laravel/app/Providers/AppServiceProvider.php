@@ -31,15 +31,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('api_usuario', function (Request $request) {
-            // Obtener el Id del usuario desde el JWT
-            $userId = $request->user() ? $request->user()->id : 'guest';
+            // Intentar obtener el usuario del request (inyectado por jwtVerify)
+            $user = $request->user();
+            
+            // Si no hay usuario, usamos la IP (como plan B)
+            $identifier = $user ? $user->id : $request->ip();
 
             // Limitar a 30 peticiones por minuto por cada ID de usuario
-            return Limit::perMinute(30)->by($userId)->response(function () {
+            return Limit::perMinute(5)->by($identifier)->response(function (Request $request, array $headers) {
                 return response()->json([
                     'success' => 'error',
                     'message' => 'Demasiadas solicitudes. Intentalo más tarde'
-                ]);
+                ], 429, $headers);
             });
         });
     }
