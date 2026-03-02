@@ -5,6 +5,7 @@ namespace App\Repositories\Usuario;
 use App\Contracts\Usuario\Repositories\IUsuarioRepository;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class UsuarioRepository implements IUsuarioRepository
 {
@@ -24,6 +25,8 @@ class UsuarioRepository implements IUsuarioRepository
     {
         $usuario = Usuario::findOrFail($id);
         $usuario->update($data);
+        $usuario->fecha_actualiza = Carbon::now();
+        $usuario->save();
 
         return $usuario;
     }

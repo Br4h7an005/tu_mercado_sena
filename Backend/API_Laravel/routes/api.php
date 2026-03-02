@@ -74,16 +74,11 @@ Route::prefix('auth')->group(function()  {
  */
 Route::middleware('jwtVerify')->group(function (){
 
-    Route::middleware('CheckGmailRestriction')->group(function () {
+    Route::middleware(['CheckGmailRestriction', 'throttle:api_usuario'])->group(function () {
 
         Route::prefix('auth')->group(function () {
-            // Cerrar sesión
             Route::post('/logout', [AuthController::class, 'logout']);
-    
-            // Refrescar token
             Route::post('/refresh', [AuthController::class, 'refresh']);
-    
-            // Obtener usuario autenticado
             Route::get('/me', [AuthController::class, 'me']);
         });
     
@@ -244,72 +239,9 @@ Route::middleware('jwtVerify')->group(function (){
          */
         Route::get('/', [ProductoController::class, 'index']);
         
-        /**
-         * Obtener un producto específico por ID
-         * 
-         * GET /api/productos/{id}
-         */
-        Route::get('/{id}', [ProductoController::class, 'show']);
+        Route::get('estados', [EstadosController::class, 'index']);
 
-        /**
-         * Crear un nuevo producto
-         * 
-         * POST /api/productos
-         * Body (form-data):
-         *   - nombre
-         *   - descripcion
-         *   - subcategoria_id
-         *   - integridad_id
-         *   - precio
-         *   - disponibles
-         *   - imagenes[] (opcional, máx 5) FALTA COMPROBAR IMÁGENES DESDE POSTMAN 
-         */
-        Route::post('/', [ProductoController::class, 'store']);
-        
-        /**
-         * Actualizar un producto existente
-         * 
-         * PUT /api/productos/{id}
-         * PATCH /api/productos/{id}
-         * Body: igual que crear
-         */
-        Route::put('/{id}', [ProductoController::class, 'update']);
-        Route::patch('/{id}', [ProductoController::class, 'update']);
-        
-        /**
-         * Eliminar un producto
-         * 
-         * DELETE /api/productos/{id}
-         */
-        Route::delete('/{id}', [ProductoController::class, 'destroy']);
-        
-        /**
-         * Cambiar el estado de un producto
-         * 
-         * PATCH /api/productos/{id}/estado
-         * Body: { "estado_id": 1 }  // 1=activo, 2=invisible, 3=eliminado
-         */
-        Route::patch('/{id}/estado', [ProductoController::class, 'cambiarEstado']);
-    });
-
-    /**
-     * Obtener los productos del usuario autenticado
-     * 
-     * GET /api/mis-productos
-     */
-    Route::get('/mis-productos', [ProductoController::class, 'misProductos']);
-
-    // GET Index: Listar todos los chats del usuario autenticado
-    // GET Show: Ver detalles de un chat específico (incluye mensajes)
-    // PATCH: Update: api/chats/{chat} Marcar mensajes como leídos o actualizar información del chat
-    // DELETE Destroy: api/chats/{chats} Eliminar un chat (opcional, dependiendo de la lógica de negocio)
-    Route::resource('chats', ChatController::class)->only([
-        'index', 'show', 'destroy'
-    ]);
-
-    // Rutas para concretar una compraventa
-    Route::patch('chats/{chat}/iniciar-compraventas', [ChatController::class, 'iniciarCompraVenta']);
-    Route::patch('chats/{chat}/terminar-compraventas', [ChatController::class, 'terminarCompraVenta']);
+        Route::get('transferencias', [ChatController::class, 'transferencias']);
 
     // Rutas para devoluciones
     Route::patch('chats/{chat}/iniciar-devoluciones', [ChatController::class, 'iniciarDevolucion']);

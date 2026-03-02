@@ -47,8 +47,33 @@ class EditarPerfilRequest extends FormRequest
                 'url',
                 'max:128',
                 'regex:/^https?:\/\/(www\.)?(youtube|instagram|facebook|twitter|linkedin)\.com\/.*$/'
-            ] 
+            ],
+            
+            'notifica_push' => [
+                'sometimes',
+                'boolean',
+            ],
+
+            'notifica_correo' => [
+                'sometimes',
+                'boolean',
+            ],
         ];
+    }
+
+    protected function passedValidation()
+    {
+        if ($this->has('notifica_push')) {
+            $this->merge([
+                'notifica_push' => !$this->boolean('notifica_push')
+            ]);
+        }
+
+        if ($this->has('notifica_correo')) {
+            $this->merge([
+                'notifica_correo' => !$this->boolean('notifica_correo')
+            ]);
+        }
     }
 
     public function messages(): array

@@ -41,6 +41,30 @@ class UsuarioService implements IUsuarioService
             );
         }
 
+        // ======== QUE SOLO SE PUEDA EDITAR EL PERFIL EN UN PLAZO DE 24 HORAS =======
+        $usuario = Auth::user()->usuario;
+
+        // Verificamos si ya ha sido editado antes
+        $yaFueEditado = $usuario->fecha_registro->ne($usuario->fecha_actualiza);
+
+        // Usamos copy() para no alterar el objeto original del modelo
+        $proximaEdicion = $usuario->fecha_actualiza->copy()->addDay();
+        $ahora = Carbon::now();
+
+        // Si ya fue editado Y aún no se cumple el plazo de 24h, bloqueamos
+        if ($yaFueEditado && $ahora->lt($proximaEdicion)) {
+            
+            $horasRestantes = (int) $ahora->diffInHours($proximaEdicion);
+            $minutosRestantes = (int) $ahora->diffInMinutes($proximaEdicion);
+
+            $mensaje = $horasRestantes >= 1 
+                ? "Solo puede editar una vez al día. Podrás editar tu perfil en $horasRestantes" . ($horasRestantes == 1 ? " hora" : " horas")
+                : "Solo puede editar una vez al día. Podrás editar tu perfil en $minutosRestantes" . ($minutosRestantes == 1 ? " minuto" : " minutos");
+
+            throw new BusinessException($mensaje, 422);
+        }
+
+
         if (empty($dto->toArray())) {
             throw new BusinessException('No hay datos para actualizar', 422);
         }
@@ -93,11 +117,30 @@ class UsuarioService implements IUsuarioService
                 ]);
             }
 
+
+            // Cambiar las opciones de las notificaciones
+            if ($dto->notifica_push !== null || $dto->notifica_correo !== null) {
+                $cuentaUsuario = Auth::user();
+
+                $cuentaUsuario->update([
+                    'notifica_push' => $dto->notifica_push ?? $cuentaUsuario->notifica_push,
+                    'notifica_correo'   => $dto->notifica_correo ?? $cuentaUsuario->notifica_correo,
+                ]);
+            }
+
             $usuario_actualizado = $this->usuarioRepository->update($usuarioId, $dto->toArray());
         
             if (!$usuario_actualizado) {
                 throw new BusinessException('No se pudo actualizar el perfil del usuario.', 500);
             }
+
+            $usuario_actualizado->load('cuenta');
+
+            $usuario_actualizado->notifica_push = $usuario_actualizado->cuenta->notifica_push;
+            $usuario_actualizado->notifica_correo = $usuario_actualizado->cuenta->notifica_correo;
+
+            // Eliminamos la relación cargada para que no ensucie el JSON de salida
+            $usuario_actualizado->unsetRelation('cuenta');
 
             return $usuario_actualizado;
         });
