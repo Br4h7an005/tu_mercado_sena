@@ -259,7 +259,10 @@ Route::middleware('jwtVerify')->group(function (){
 
     Route::get('estados', [EstadosController::class, 'index']);
 
-    Route::get('motivos', [MotivoController::class, 'index']);
+    //GET /api/motivos?tipo=pqrs
+    //GET /api/motivos?tipo=notificaciones
+    Route::get('motivos', [MotivoController::class, 'index']); // GET /api/motivos?tipo=denuncia 
+
 
     Route::get('transferencias', [ChatController::class, 'transferencias']);
 

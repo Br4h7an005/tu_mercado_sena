@@ -16,7 +16,7 @@ class MotivoController extends Controller
      */
     public function index(Request $request)
     {
-        $tipo = $request->query('tipo');
+        $tipo = $request->query('tipo');    
 
         $query = Motivo::query();
 
