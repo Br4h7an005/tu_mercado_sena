@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\Api\ProductoController; 
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\EstadosController;
+use App\Http\Controllers\Api\MotivoController;
 use App\Http\Controllers\Api\MensajeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -201,6 +202,12 @@ Route::middleware('jwtVerify')->group(function (){
         Route::post('chats/{chat}/mensajes', [MensajeController::class, 'store'])->middleware('CheckChatBlock');
         // RUTA: api/mensajes/{mensaje}
         Route::delete('mensajes/{mensaje}', [MensajeController::class, 'destroy']);
+
+        // ----------------------------------------
+        // DENUNCIAS (solo creación, el resto es para admins)
+        // ----------------------------------------
+        Route::post('denuncias', [\App\Http\Controllers\Api\DenunciaController::class, 'store'])
+            ->middleware('CheckDenuncia');
     });
 
     Route::patch("/editar-perfil/{id}", [UsuarioController::class, 'update']);
@@ -319,6 +326,8 @@ Route::middleware('jwtVerify')->group(function (){
     Route::delete('mensajes/{mensaje}', [MensajeController::class, 'destroy']);
 
     Route::get('estados', [EstadosController::class, 'index']);
+
+    Route::get('motivos', [MotivoController::class, 'index']);
 
     Route::get('transferencias', [ChatController::class, 'transferencias']);
 
