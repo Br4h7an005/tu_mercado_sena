@@ -29,6 +29,7 @@ class MotivoController extends Controller
         return response()->json([
             'success' => true,
             'data' => $motivos,
+            'status' => 201,
         ]);
     }
 }

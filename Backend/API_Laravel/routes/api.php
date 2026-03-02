@@ -198,75 +198,23 @@ Route::middleware('jwtVerify')->group(function (){
         // RUTA: api/mensajes/{mensaje}
         Route::delete('mensajes/{mensaje}', [MensajeController::class, 'destroy']);
 
+        Route::get('estados', [EstadosController::class, 'index']);
+
+        //GET /api/motivos?tipo=pqrs
+        //GET /api/motivos?tipo=notificaciones
+        Route::get('motivos', [MotivoController::class, 'index']); // GET /api/motivos?tipo=denuncia 
+
+
+        Route::get('transferencias', [ChatController::class, 'transferencias']);
+
+        Route::get('transferencias-filtros', [ChatController::class, 'filtrarTransferencias']);
+
         // ----------------------------------------
         // DENUNCIAS (solo creación, el resto es para admins)
         // ----------------------------------------
         Route::post('denuncias', [\App\Http\Controllers\Api\DenunciaController::class, 'store'])
             ->middleware('CheckDenuncia');
     });
-
-    Route::patch("/editar-perfil/{id}", [UsuarioController::class, 'update']);
-
-    // === BLOQUEADOS ===
-    Route::get('/bloqueados', [UsuarioController::class, 'obtenerBloqueadosPorUsuario']);
-    Route::post('/bloqueados/{usuario}', [UsuarioController::class, 'bloquearUsuario']);
-    Route::delete('/bloqueados/{usuario}', [UsuarioController::class, 'desbloquearUsuario']);
-
-    // ========================================
-    // === PRODUCTOS (RUTAS PROTEGIDAS) ===
-    // ========================================
-    
-    Route::prefix('productos')->group(function () {
-        /**
-         * Buscar productos por texto en nombre o descripción
-         * 
-         * GET /api/productos/buscar?q=laptop&per_page=15
-         */
-        Route::get('/buscar', [ProductoController::class, 'buscar']);
-        
-        /**
-         * Obtener productos de un vendedor específico
-         * 
-         * GET /api/productos/vendedor/{vendedorId}
-         */
-        Route::get('/vendedor/{vendedorId}', [ProductoController::class, 'porVendedor']);
-        
-        /**
-         * Listar productos con filtros opcionales
-         * 
-         * GET /api/productos
-         * Query params: ?categoria_id=1&subcategoria_id=5&integridad_id=1&vendedor_id=10&per_page=15
-         */
-        Route::get('/', [ProductoController::class, 'index']);
-        
-        Route::get('estados', [EstadosController::class, 'index']);
-
-        Route::get('transferencias', [ChatController::class, 'transferencias']);
-
-    // Rutas para devoluciones
-    Route::patch('chats/{chat}/iniciar-devoluciones', [ChatController::class, 'iniciarDevolucion']);
-    Route::patch('chats/{chat}/terminar-devoluciones', [ChatController::class, 'terminarDevolucion']);
-    
-    // RUTA: api/chats
-    // Crea un nuevo chat entre el usuario autenticado y otro usuario (vendedor)
-    // El middleware "CheckChatBlock" verifica si el usuario autenticado ha bloqueado al otro usuario o viceversa
-    Route::post('productos/{producto}/chats', [ChatController::class, 'store']);//->middleware('CheckChatBlock');
-    
-    //RUTA: api/chats/{chat}/mensajes
-    Route::post('chats/{chat}/mensajes', [MensajeController::class, 'store'])->middleware('CheckChatBlock');
-    // RUTA: api/mensajes/{mensaje}
-    Route::delete('mensajes/{mensaje}', [MensajeController::class, 'destroy']);
-
-    Route::get('estados', [EstadosController::class, 'index']);
-
-    //GET /api/motivos?tipo=pqrs
-    //GET /api/motivos?tipo=notificaciones
-    Route::get('motivos', [MotivoController::class, 'index']); // GET /api/motivos?tipo=denuncia 
-
-
-    Route::get('transferencias', [ChatController::class, 'transferencias']);
-
-    Route::get('transferencias-filtros', [ChatController::class, 'filtrarTransferencias']);
 });
 
 
