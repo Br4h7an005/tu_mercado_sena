@@ -7,6 +7,7 @@ use App\Contracts\Producto\Services\IProductoService;
 use App\Contracts\Producto\Repositories\IProductoRepository;
 use App\DTOs\Producto\InputDto;
 use App\DTOs\Producto\OutputDto;
+use App\Exceptions\BusinessException;
 use App\Models\Foto;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,16 @@ class ProductoService implements IProductoService
         'count' => $imagenes ? count($imagenes) : 0,
         'tipo' => $imagenes ? gettype($imagenes) : 'null'
     ]);
+
+    $cuenta = Auth::user();
+
+    $isGmail = str_ends_with(strtolower($cuenta->email), '@gmail.com');
+
+    if ($isGmail) {
+        Log::warning('SERVICE: Usuario con email Gmail detectado', ['email' => $cuenta->email]);
+        throw new BusinessException('No se permiten cuentas de Gmail para crear productos. Por favor, utiliza una cuenta de correo electrónico diferente.', 403);
+    }
+
 
     try {
         return DB::transaction(function () use ($dto, $imagenes) {
