@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Papelera;
 
 class ProductoService implements IProductoService
 {
@@ -341,6 +342,12 @@ class ProductoService implements IProductoService
             Foto::create([
                 'producto_id' => $productoId,
                 'imagen' => $nombreArchivo,
+            ]);
+
+            Papelera::create([
+                'usuario_id' => Auth::user()->usuario->id,
+                'mensaje' => "Imagen del producto ID: {$productoId}",
+                'imagen' => 'productos/' . $nombreArchivo,
             ]);
         }
     }
