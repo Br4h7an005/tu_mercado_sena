@@ -375,7 +375,9 @@ class ProductoService implements IProductoService
             Storage::disk('public')->delete('productos/' . $foto->imagen);
             
             // Eliminar registro de BD
-            $foto->delete();
+            // $foto->delete();
         }
+
+        Foto::where('producto_id', $productoId)->delete();
     }
 }
